@@ -17,7 +17,13 @@ module.exports = {
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
+    '!src/**/node_modules/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  testTimeout: 10000,
+  verbose: true,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
 };

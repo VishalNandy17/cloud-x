@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcloudx-server
+  namespace: dcloudx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dcloudx-server
+  template:
+    metadata:
+      labels:
+        app: dcloudx-server
+    spec:
+      containers:
+      - name: dcloudx-server
+        image: dcloudx/server:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: dcloudx-secrets
+              key: mongodb-uri
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: dcloudx-secrets
+              key: redis-url
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcloudx-server
+  namespace: dcloudx
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+  selector:
+    app: dcloudx-server

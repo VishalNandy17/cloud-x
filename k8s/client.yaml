@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcloudx-client
+  namespace: dcloudx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dcloudx-client
+  template:
+    metadata:
+      labels:
+        app: dcloudx-client
+    spec:
+      containers:
+      - name: dcloudx-client
+        image: dcloudx/client:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://dcloudx-server:5000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcloudx-client
+  namespace: dcloudx
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: dcloudx-client

@@ -1,0 +1,38 @@
+# Dockerfile for Smart Contracts
+FROM node:18-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    curl \
+    bash \
+    python3 \
+    make \
+    g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build contracts
+RUN npm run compile
+
+# Create deployment script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Deploying contracts to $NETWORK..."\n\
+npx hardhat run scripts/deploy.js --network $NETWORK\n\
+echo "Contracts deployed successfully!"' > deploy.sh
+
+RUN chmod +x deploy.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD echo "Contract deployer is ready"
+
+CMD ["./deploy.sh"]

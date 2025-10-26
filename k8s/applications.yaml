@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcloudx-server
+  namespace: dcloudx
+  labels:
+    app: dcloudx-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dcloudx-server
+  template:
+    metadata:
+      labels:
+        app: dcloudx-server
+    spec:
+      containers:
+      - name: dcloudx-server
+        image: dcloudx-server:latest
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: dcloudx-config
+        - secretRef:
+            name: dcloudx-secrets
+        volumeMounts:
+        - name: gcp-key
+          mountPath: /etc/gcp-key
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: gcp-key
+        secret:
+          secretName: gcp-service-account-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcloudx-server-service
+  namespace: dcloudx
+spec:
+  selector:
+    app: dcloudx-server
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcloudx-client
+  namespace: dcloudx
+  labels:
+    app: dcloudx-client
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dcloudx-client
+  template:
+    metadata:
+      labels:
+        app: dcloudx-client
+    spec:
+      containers:
+      - name: dcloudx-client
+        image: dcloudx-client:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://dcloudx-server-service:5000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcloudx-client-service
+  namespace: dcloudx
+spec:
+  selector:
+    app: dcloudx-client
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP

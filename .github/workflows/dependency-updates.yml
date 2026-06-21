@@ -35,12 +35,16 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: |
+          contracts/package-lock.json
+          server/package-lock.json
+          client/package-lock.json
         
     - name: Install dependencies
       run: |
-        cd contracts && npm ci
-        cd ../server && npm ci
-        cd ../client && npm ci
+        cd contracts && npm ci --legacy-peer-deps
+        cd ../server && npm ci --legacy-peer-deps
+        cd ../client && npm ci --legacy-peer-deps
         
     - name: Update contract dependencies
       run: |

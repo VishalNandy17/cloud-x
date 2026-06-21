@@ -23,27 +23,23 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          contracts/package-lock.json
+          server/package-lock.json
+          client/package-lock.json
         
     - name: Install dependencies
-      run: |
-        cd contracts && npm ci
-        cd ../server && npm ci
-        cd ../client && npm ci
+      run: npm ci --legacy-peer-deps
         
     - name: Run ESLint (Server)
-      run: |
-        cd server
-        npm run lint || echo "Server linting completed with warnings"
+      run: npm run lint:server || echo "Server linting completed with warnings"
         
     - name: Run ESLint (Client)
-      run: |
-        cd client
-        npm run lint || echo "Client linting completed with warnings"
+      run: npm run lint:client || echo "Client linting completed with warnings"
         
     - name: Run Solhint (Contracts)
-      run: |
-        cd contracts
-        npm run lint || echo "Contract linting completed with warnings"
+      run: npm run lint:contracts || echo "Contract linting completed with warnings"
 
   # Security Audit
   security:
@@ -57,15 +53,15 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        
-    - name: Install dependencies
-      run: |
-        cd contracts && npm ci
-        cd ../server && npm ci
-        cd ../client && npm ci
+        cache-dependency-path: |
+          package-lock.json
+          contracts/package-lock.json
+          server/package-lock.json
+          client/package-lock.json
         
     - name: Run security audit
       run: |
+        npm audit --audit-level moderate || echo "Root audit completed"
         cd contracts && npm audit --audit-level moderate || echo "Contract audit completed"
         cd ../server && npm audit --audit-level moderate || echo "Server audit completed"
         cd ../client && npm audit --audit-level moderate || echo "Client audit completed"
@@ -82,20 +78,16 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: contracts/package-lock.json
         
     - name: Install dependencies
-      run: |
-        cd contracts && npm ci
+      run: cd contracts && npm ci
         
     - name: Compile contracts
-      run: |
-        cd contracts
-        npm run compile
+      run: cd contracts && npm run compile
         
     - name: Run contract tests
-      run: |
-        cd contracts
-        npm run test || echo "Contract tests completed"
+      run: cd contracts && npm run test || echo "Contract tests completed"
 
   # Test Server
   test-server:
@@ -109,15 +101,13 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: server/package-lock.json
         
     - name: Install dependencies
-      run: |
-        cd server && npm ci
+      run: cd server && npm ci --legacy-peer-deps
         
     - name: Run server tests
-      run: |
-        cd server
-        npm run test || echo "Server tests completed"
+      run: cd server && npm run test || echo "Server tests completed"
 
   # Test Client
   test-client:
@@ -131,15 +121,13 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: client/package-lock.json
         
     - name: Install dependencies
-      run: |
-        cd client && npm ci
+      run: cd client && npm ci --legacy-peer-deps
         
     - name: Run client tests
-      run: |
-        cd client
-        npm run test || echo "Client tests completed"
+      run: cd client && npm run test || echo "Client tests completed"
 
   # Build Applications
   build:
@@ -156,30 +144,26 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          contracts/package-lock.json
+          server/package-lock.json
+          client/package-lock.json
         
-    - name: Install dependencies
-      run: |
-        cd contracts && npm ci
-        cd ../server && npm ci
-        cd ../client && npm ci
+    - name: Install all dependencies
+      run: npm ci --legacy-peer-deps
         
     - name: Build contracts
-      run: |
-        cd contracts
-        npm run compile
+      run: cd contracts && npm run compile
         
     - name: Build server
-      run: |
-        cd server
-        npm run build
+      run: cd server && npm run build
         
     - name: Build client
-      run: |
-        cd client
-        npm run build
+      run: cd client && npm run build
         
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: |
@@ -199,7 +183,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-artifacts
         path: ./
@@ -349,13 +333,13 @@ jobs:
         exit-code: '0'
         
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
       continue-on-error: true
         
     - name: Run CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         languages: javascript, typescript
       continue-on-error: true

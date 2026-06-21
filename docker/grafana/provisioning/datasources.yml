@@ -1,0 +1,78 @@
+# Grafana provisioning configuration
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: Elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: "dcloudx-logs"
+    editable: true
+
+  - name: MongoDB
+    type: mongodb
+    access: proxy
+    url: mongodb://mongodb:27017/dcloudx
+    database: dcloudx
+    editable: true
+
+dashboards:
+  - name: D-CloudX Overview
+    options:
+      path: /etc/grafana/provisioning/dashboards/dcloudx-overview.json
+      folder: D-CloudX
+      overwrite: true
+
+  - name: System Metrics
+    options:
+      path: /etc/grafana/provisioning/dashboards/system-metrics.json
+      folder: Infrastructure
+      overwrite: true
+
+  - name: Application Metrics
+    options:
+      path: /etc/grafana/provisioning/dashboards/application-metrics.json
+      folder: D-CloudX
+      overwrite: true
+
+  - name: Blockchain Metrics
+    options:
+      path: /etc/grafana/provisioning/dashboards/blockchain-metrics.json
+      folder: D-CloudX
+      overwrite: true
+
+  - name: Cloud Provider Metrics
+    options:
+      path: /etc/grafana/provisioning/dashboards/cloud-metrics.json
+      folder: D-CloudX
+      overwrite: true
+
+alerting:
+  contactpoints:
+    - name: webhook
+      type: webhook
+      settings:
+        url: http://server:5000/api/v1/alerts/webhook
+        httpMethod: POST
+        title: "D-CloudX Alert"
+        text: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+
+  policies:
+    - orgId: 1
+      folder: D-CloudX
+      folderTitle: D-CloudX Alerts
+      intervalSeconds: 60
+      contactPoint: webhook
+      noDataState: NoData
+      execErrState: Alerting
+      for: 0s
+      annotations:
+        summary: "D-CloudX system alert"
+        description: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"

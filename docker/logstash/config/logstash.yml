@@ -1,0 +1,28 @@
+# Logstash general configuration
+http.host: "0.0.0.0"
+xpack.monitoring.elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+xpack.monitoring.enabled: true
+xpack.security.enabled: false
+
+# Pipeline configuration
+pipeline.workers: 2
+pipeline.batch.size: 1000
+pipeline.batch.delay: 50
+
+# Logging
+log.level: info
+path.logs: /usr/share/logstash/logs
+
+# Dead letter queue
+dead_letter_queue.enable: true
+path.dead_letter_queue: /usr/share/logstash/data/dead_letter_queue
+
+# Persistent queues
+queue.type: persisted
+path.queue: /usr/share/logstash/data/queue
+queue.max_bytes: 1gb
+queue.max_events: 0
+
+# JVM settings
+config.reload.automatic: true
+config.reload.interval: 3s

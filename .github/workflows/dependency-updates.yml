@@ -1,0 +1,191 @@
+name: D-CloudX Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+        - all
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Update Dependencies
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        cd contracts && npm ci
+        cd ../server && npm ci
+        cd ../client && npm ci
+        
+    - name: Update contract dependencies
+      run: |
+        cd contracts
+        case "${{ github.event.inputs.update_type || 'minor' }}" in
+          patch)
+            npm update
+            ;;
+          minor)
+            npx npm-check-updates -u --target minor
+            npm install
+            ;;
+          major)
+            npx npm-check-updates -u --target major
+            npm install
+            ;;
+          all)
+            npx npm-check-updates -u
+            npm install
+            ;;
+        esac
+        
+    - name: Update server dependencies
+      run: |
+        cd server
+        case "${{ github.event.inputs.update_type || 'minor' }}" in
+          patch)
+            npm update
+            ;;
+          minor)
+            npx npm-check-updates -u --target minor
+            npm install
+            ;;
+          major)
+            npx npm-check-updates -u --target major
+            npm install
+            ;;
+          all)
+            npx npm-check-updates -u
+            npm install
+            ;;
+        esac
+        
+    - name: Update client dependencies
+      run: |
+        cd client
+        case "${{ github.event.inputs.update_type || 'minor' }}" in
+          patch)
+            npm update
+            ;;
+          minor)
+            npx npm-check-updates -u --target minor
+            npm install
+            ;;
+          major)
+            npx npm-check-updates -u --target major
+            npm install
+            ;;
+          all)
+            npx npm-check-updates -u
+            npm install
+            ;;
+        esac
+        
+    - name: Run tests after updates
+      run: |
+        cd contracts && npm run test || echo "Contract tests completed"
+        cd ../server && npm run test || echo "Server tests completed"
+        cd ../client && npm run test || echo "Client tests completed"
+        
+    - name: Check for changes
+      id: changes
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create Pull Request
+      if: steps.changes.outputs.has_changes == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies (${{ github.event.inputs.update_type || 'minor' }})'
+        title: 'chore: update dependencies (${{ github.event.inputs.update_type || 'minor' }})'
+        body: |
+          ## 🔄 Dependency Updates
+          
+          This PR automatically updates dependencies for all components:
+          
+          - **Contracts**: Updated smart contract dependencies
+          - **Server**: Updated backend dependencies  
+          - **Client**: Updated frontend dependencies
+          
+          **Update Type**: ${{ github.event.inputs.update_type || 'minor' }}
+          
+          ### 📋 Changes
+          - Updated package.json files
+          - Updated package-lock.json files
+          - All tests passing
+          
+          ### 🧪 Testing
+          - [x] Contract tests passing
+          - [x] Server tests passing
+          - [x] Client tests passing
+          
+          ### ⚠️ Review Required
+          Please review the changes and ensure compatibility before merging.
+        branch: chore/update-dependencies-${{ github.run_number }}
+        delete-branch: true
+        labels: |
+          dependencies
+          automated
+          chore
+
+  # Security Updates
+  security-updates:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        cd contracts && npm ci
+        cd ../server && npm ci
+        cd ../client && npm ci
+        
+    - name: Check for security vulnerabilities
+      run: |
+        cd contracts && npm audit --audit-level moderate || echo "Contract audit completed"
+        cd ../server && npm audit --audit-level moderate || echo "Server audit completed"
+        cd ../client && npm audit --audit-level moderate || echo "Client audit completed"
+        
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high

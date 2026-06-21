@@ -1,0 +1,59 @@
+{
+  "name": "dcloudx",
+  "version": "1.0.0",
+  "description": "D-CloudX - Decentralized Cloud Resource Marketplace",
+  "private": true,
+  "license": "MIT",
+  "author": "Vishal Nandy (@VishalNandy17)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VishalNandy17/cloud-x.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "workspaces": [
+    "server",
+    "client",
+    "contracts"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client && npm install --prefix contracts",
+    "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\" \"npm:dev:contracts\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev:contracts": "npm run node --prefix contracts",
+    "build": "npm run build:contracts && npm run build:server && npm run build:client",
+    "build:server": "npm run build --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build:contracts": "npm run compile --prefix contracts",
+    "test": "concurrently \"npm:test:server\" \"npm:test:client\" \"npm:test:contracts\"",
+    "test:server": "npm run test --prefix server",
+    "test:client": "npm run test --prefix client",
+    "test:contracts": "npm run test --prefix contracts",
+    "test:coverage": "concurrently \"npm:test:coverage:server\" \"npm:test:coverage:client\" \"npm:test:coverage:contracts\"",
+    "test:coverage:server": "npm run test:cov --prefix server",
+    "test:coverage:client": "npm run test:coverage --prefix client",
+    "test:coverage:contracts": "npm run test:coverage --prefix contracts",
+    "lint": "concurrently \"npm:lint:server\" \"npm:lint:client\" \"npm:lint:contracts\"",
+    "lint:server": "npm run lint --prefix server",
+    "lint:client": "npm run lint --prefix client",
+    "lint:contracts": "npm run lint --prefix contracts",
+    "format": "concurrently \"npm:format:server\" \"npm:format:client\" \"npm:format:contracts\"",
+    "format:server": "npm run format --prefix server",
+    "format:client": "npm run format --prefix client",
+    "format:contracts": "npm run format --prefix contracts",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "deploy:local": "npm run deploy:local --prefix contracts",
+    "deploy:sepolia": "npm run deploy:sepolia --prefix contracts",
+    "clean": "concurrently \"npm run clean --prefix server\" \"npm run clean --prefix contracts\" && rm -rf client/.next client/out",
+    "preinstall": "node scripts/check-node-version.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

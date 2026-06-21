@@ -13,7 +13,7 @@ module.exports = {
   ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/../test/setup.ts'],

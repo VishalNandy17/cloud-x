@@ -51,7 +51,7 @@ interface Booking {
   };
 }
 
-interface BookingState {
+export interface BookingState {
   bookings: Booking[];
   selectedBooking: Booking | null;
   filters: {

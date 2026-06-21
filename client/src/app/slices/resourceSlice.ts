@@ -25,7 +25,7 @@ interface Resource {
   };
 }
 
-interface ResourceState {
+export interface ResourceState {
   resources: Resource[];
   selectedResource: Resource | null;
   filters: {
